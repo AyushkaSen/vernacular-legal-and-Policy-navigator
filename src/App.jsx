@@ -1,240 +1,206 @@
 import { useState } from 'react';
-
-// --- DUMMY DATA FOR STATIC SCREENS ---
-const DUMMY_RESULT_HIGH = {
-  documentName: "Land_Record_RTC_2024.pdf",
-  summary: "This document certifies land ownership under Section 4 of the Karnataka Land Revenue Act. No active encumbrances or legal disputes were found.",
-  confidenceScore: 94,
-  confidenceLevel: "HIGH",
-  keyDetails: [
-    { label: "Owner Name", value: "Ramesh Kumar" },
-    { label: "Survey Number", value: "104/2A" },
-    { label: "Jurisdiction", value: "Tehsildar Office, North Zone" },
-    { label: "Status", value: "Verified & Active" },
-  ]
-};
-
-const DUMMY_RESULT_LOW = {
-  documentName: "Handwritten_Claim_Notice.jpg",
-  summary: "Low-quality image scan with illegible text in section 3. Multiple ambiguous legal clause matches detected.",
-  confidenceScore: 42,
-  confidenceLevel: "LOW",
-  keyDetails: [
-    { label: "Claim Type", value: "Unverified Title Dispute" },
-    { label: "Confidence Rating", value: "42% (Below 50% Threshold)" },
-    { label: "Flagged Issues", value: "Unclear stamp, missing signatory" }
-  ]
-};
+import { fetchMockAnalysis } from './api';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('input');
-  const [activeData, setActiveData] = useState(DUMMY_RESULT_HIGH);
+  const [analysisResult, setAnalysisResult] = useState(null);
   
-  // States for interactive voice/photo placeholders
+  // Toggle State: 'brief' or 'detailed'
+  const [viewMode, setViewMode] = useState('brief');
+
+  // Voice & File states
   const [isRecording, setIsRecording] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [selectedFileName, setSelectedFileName] = useState('');
 
-  const handleSimulate = (data) => {
-    setActiveData(data);
+  const handleAnalyze = async (sampleType) => {
     setCurrentScreen('loading');
-    setTimeout(() => {
+    try {
+      const data = await fetchMockAnalysis(sampleType);
+      setAnalysisResult(data);
       setCurrentScreen('result');
-    }, 1500);
+    } catch (error) {
+      alert("Error fetching mock analysis!");
+      setCurrentScreen('input');
+    }
   };
 
-  // Handler for voice input button placeholder simulation
   const handleMicClick = () => {
     if (!isRecording) {
       setIsRecording(true);
-      setVoiceTranscript("Listening... (Speak your legal query or prompt in your vernacular language)");
+      setVoiceTranscript("Listening... (Speak query in vernacular language)");
       setTimeout(() => {
-        setVoiceTranscript("“What are my rights regarding land acquisition notice received yesterday?”");
+        setVoiceTranscript("“Is my survey number 104/2A eligible for the new scheme?”");
         setIsRecording(false);
-      }, 3000);
+      }, 2500);
     }
   };
 
-  // Handler for file/photo upload
-  const handleFileChange = (e) => {
-    if (e.target.files[0]) {
-      setSelectedFileName(e.target.files[0].name);
-    }
-  };
-
-  const ConfidenceBadge = ({ level, score }) => {
-    let bgColor = '#2e7d32'; // Green
-    if (level === 'MEDIUM') bgColor = '#f57c00'; // Orange
-    if (level === 'LOW') bgColor = '#c62828'; // Red
+  // --- TRAFFIC LIGHT BADGE ---
+  const TrafficLightBadge = ({ level, score }) => {
+    let config = { color: '#2e7d32', bgColor: '#e8f5e9', borderColor: '#a5d6a7', icon: '🟢', label: 'HIGH CONFIDENCE' };
+    if (level === 'MEDIUM') config = { color: '#f57f17', bgColor: '#fffde7', borderColor: '#fff59d', icon: '🟡', label: 'MEDIUM CONFIDENCE' };
+    if (level === 'LOW') config = { color: '#c62828', bgColor: '#ffebee', borderColor: '#ef9a9a', icon: '🔴', label: 'LOW CONFIDENCE' };
 
     return (
-      <span style={{
-        backgroundColor: bgColor,
-        color: '#ffffff',
-        padding: '6px 12px',
-        borderRadius: '16px',
-        fontSize: '0.85rem',
-        fontWeight: 'bold',
-        display: 'inline-block'
-      }}>
-        ● {level} CONFIDENCE ({score}%)
-      </span>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: config.bgColor, color: config.color, border: `1px solid ${config.borderColor}`, padding: '6px 14px', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.85rem' }}>
+        <span>{config.icon}</span>
+        <span>{config.label} ({score}%)</span>
+      </div>
     );
   };
 
   return (
-    <div style={{ maxWidth: '700px', margin: '40px auto', fontFamily: 'Segoe UI, sans-serif', padding: '0 20px', color: '#333' }}>
+    <div style={{ maxWidth: '720px', margin: '30px auto', fontFamily: 'Segoe UI, sans-serif', padding: '0 20px', color: '#222' }}>
       
-      {/* APP HEADER */}
-      <header style={{ borderBottom: '2px solid #eee', paddingBottom: '15px', marginBottom: '30px' }}>
+      {/* HEADER */}
+      <header style={{ borderBottom: '2px solid #e0e0e0', paddingBottom: '15px', marginBottom: '25px' }}>
         <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#1a237e' }}>
           🏛️ Vernacular Legal & Policy Navigator
         </h1>
-        <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '0.95rem' }}>
-          Simplifying complex legal documents and government schemes
+        <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '0.95rem' }}>
+          Interactive Summary Switcher & Mock API Integration
         </p>
       </header>
 
-      {/* ---------------- 1. INPUT FORM SCREEN WITH VOICE & PHOTO UI ---------------- */}
+      {/* ---------------- 1. INPUT SCREEN ---------------- */}
       {currentScreen === 'input' && (
-        <div style={{ backgroundColor: '#f8f9fa', padding: '30px', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
-          <h2 style={{ marginTop: 0 }}>Document & Query Input</h2>
-          <p style={{ color: '#555', fontSize: '0.9rem' }}>Upload files, take a photo scan, or use voice input to query legal policies.</p>
+        <div style={{ backgroundColor: '#f9f9fb', padding: '25px', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
+          <h2 style={{ marginTop: 0, fontSize: '1.3rem' }}>1. Document & Query Input</h2>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
             
-            {/* PHOTO / DOCUMENT FILE UPLOAD BUTTON UI */}
-            <div style={{ border: '2px dashed #b0bec5', padding: '20px', borderRadius: '8px', textAlign: 'center', background: '#fff' }}>
-              <p style={{ margin: '0 0 10px 0', fontWeight: '600', color: '#37474f' }}>📁 Upload Document or Photo Scan</p>
-              <input 
-                type="file" 
-                id="fileUpload" 
-                onChange={handleFileChange} 
-                style={{ display: 'none' }} 
-              />
-              <label 
-                htmlFor="fileUpload" 
-                style={{ display: 'inline-block', padding: '10px 18px', backgroundColor: '#eef2f5', color: '#333', border: '1px solid #cfd8dc', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' }}
-              >
-                Choose File / Take Photo
+            {/* FILE UPLOAD */}
+            <div style={{ border: '2px dashed #b0bec5', padding: '15px', borderRadius: '8px', textAlign: 'center', background: '#fff' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>📁 Upload Legal Document / Photo Scan</span>
+              <br />
+              <input type="file" id="fileInput" style={{ display: 'none' }} onChange={(e) => e.target.files[0] && setSelectedFileName(e.target.files[0].name)} />
+              <label htmlFor="fileInput" style={{ display: 'inline-block', marginTop: '8px', padding: '8px 16px', background: '#e3f2fd', color: '#0d47a1', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}>
+                Browse File / Camera
               </label>
-              {selectedFileName && (
-                <p style={{ margin: '10px 0 0 0', fontSize: '0.85rem', color: '#2e7d32', fontWeight: 'bold' }}>
-                  Selected: {selectedFileName}
-                </p>
-              )}
+              {selectedFileName && <p style={{ margin: '5px 0 0 0', fontSize: '0.8rem', color: '#2e7d32' }}>Selected: {selectedFileName}</p>}
             </div>
 
-            {/* VOICE INPUT BUTTON UI PLACEHOLDER */}
-            <div style={{ padding: '20px', borderRadius: '8px', textAlign: 'center', background: '#e3f2fd', border: '1px solid #bbdefb' }}>
-              <p style={{ margin: '0 0 10px 0', fontWeight: '600', color: '#0d47a1' }}>🎙️ Vernacular Voice Input</p>
-              <button 
-                type="button"
-                onClick={handleMicClick}
-                style={{ 
-                  padding: '12px 24px', 
-                  backgroundColor: isRecording ? '#c62828' : '#1976d2', 
-                  color: '#fff', 
-                  border: 'none', 
-                  borderRadius: '30px', 
-                  fontWeight: 'bold', 
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                }}
-              >
-                {isRecording ? '🔴 Listening...' : '🎤 Tap to Speak Query'}
+            {/* VOICE MIC INPUT */}
+            <div style={{ padding: '15px', borderRadius: '8px', textAlign: 'center', background: '#f3e5f5', border: '1px solid #e1bee7' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#4a148c' }}>🎙️ Vernacular Voice Query</span>
+              <br />
+              <button type="button" onClick={handleMicClick} style={{ marginTop: '8px', padding: '8px 20px', background: isRecording ? '#c62828' : '#7b1fa2', color: '#fff', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}>
+                {isRecording ? '🔴 Listening...' : '🎤 Speak Prompt'}
               </button>
-              {voiceTranscript && (
-                <p style={{ margin: '12px 0 0 0', fontSize: '0.9rem', fontStyle: 'italic', color: '#0d47a1', background: '#fff', padding: '10px', borderRadius: '6px' }}>
-                  {voiceTranscript}
-                </p>
-              )}
+              {voiceTranscript && <p style={{ margin: '8px 0 0 0', fontSize: '0.85rem', fontStyle: 'italic', background: '#fff', padding: '6px', borderRadius: '4px' }}>{voiceTranscript}</p>}
             </div>
 
-            {/* TEXT INPUT AREA */}
-            <div>
-              <label style={{ fontWeight: '600', display: 'block', marginBottom: '8px' }}>
-                Or Type Text / Query Directly:
+            {/* MOCK TRIGGER BUTTONS */}
+            <div style={{ marginTop: '10px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '8px' }}>
+                Test Mock API Responses:
               </label>
-              <textarea 
-                rows="3" 
-                placeholder="Paste legal clauses or type query here..." 
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontFamily: 'inherit', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            {/* SIMULATION ACTION BUTTONS */}
-            <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-              <button 
-                onClick={() => handleSimulate(DUMMY_RESULT_HIGH)} 
-                style={{ flex: 1, padding: '12px', backgroundColor: '#1a237e', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-              >
-                Analyze (High Confidence)
-              </button>
-              
-              <button 
-                onClick={() => handleSimulate(DUMMY_RESULT_LOW)} 
-                style={{ flex: 1, padding: '12px', backgroundColor: '#d32f2f', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-              >
-                Analyze (Low Confidence)
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => handleAnalyze('HIGH')} style={{ flex: 1, padding: '10px', backgroundColor: '#2e7d32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>🟢 High (92%)</button>
+                <button onClick={() => handleAnalyze('MEDIUM')} style={{ flex: 1, padding: '10px', backgroundColor: '#f57f17', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>🟡 Medium (68%)</button>
+                <button onClick={() => handleAnalyze('LOW')} style={{ flex: 1, padding: '10px', backgroundColor: '#c62828', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>🔴 Low (38%)</button>
+              </div>
             </div>
 
           </div>
         </div>
       )}
 
-      {/* ---------------- 2. LOADING SCREEN ---------------- */}
+      {/* ---------------- 2. LOADING STATE ---------------- */}
       {currentScreen === 'loading' && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: '#f8f9fa', borderRadius: '12px' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '10px' }}>📄⚙️</div>
-          <h3 style={{ margin: 0, color: '#333' }}>Analyzing Legal Document / Query...</h3>
-          <p style={{ color: '#666', marginTop: '5px' }}>Translating vernacular terms and verifying policy clauses.</p>
+        <div style={{ textAlign: 'center', padding: '50px 20px', background: '#f9f9fb', borderRadius: '12px' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⚙️</div>
+          <h3 style={{ margin: 0 }}>Processing Document Summary...</h3>
         </div>
       )}
 
-      {/* ---------------- 3. RESULT CARD SCREEN ---------------- */}
-      {currentScreen === 'result' && (
+      {/* ---------------- 3. RESULT SCREEN WITH BRIEF/DETAILED TOGGLE ---------------- */}
+      {currentScreen === 'result' && analysisResult && (
         <div>
-          <button 
-            onClick={() => setCurrentScreen('input')} 
-            style={{ marginBottom: '15px', padding: '6px 12px', background: '#e0e0e0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-          >
-            ← Back to Input
+          <button onClick={() => setCurrentScreen('input')} style={{ marginBottom: '15px', padding: '6px 14px', background: '#e0e0e0', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600' }}>
+            ← Test Another Query
           </button>
 
-          <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
             
-            <div style={{ padding: '20px', backgroundColor: '#fafafa', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* CARD HEADER */}
+            <div style={{ padding: '18px 20px', backgroundColor: '#fafafa', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{activeData.documentName}</h3>
-                <span style={{ fontSize: '0.85rem', color: '#777' }}>Processed Analysis Output</span>
+                <h3 style={{ margin: 0, fontSize: '1.15rem' }}>{analysisResult.documentName}</h3>
+                <span style={{ fontSize: '0.8rem', color: '#777' }}>Analysis Complete</span>
               </div>
-              <ConfidenceBadge level={activeData.confidenceLevel} score={activeData.confidenceScore} />
+              <TrafficLightBadge level={analysisResult.confidenceLevel} score={analysisResult.confidenceScore} />
             </div>
 
+            {/* CARD BODY */}
             <div style={{ padding: '20px' }}>
-              <p style={{ fontSize: '1rem', lineHeight: '1.5', margin: '0 0 20px 0', padding: '12px', backgroundColor: '#f0f4c3', borderRadius: '6px', borderLeft: '4px solid #afb42b' }}>
-                💡 <strong>Plain English Breakdown:</strong> {activeData.summary}
-              </p>
+              
+              {/* --- UX TOGGLE BUTTON SWITCHER --- */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <span style={{ fontWeight: 'bold', color: '#1a237e', fontSize: '0.95rem' }}>💡 Plain-Language Summary</span>
+                
+                {/* TOGGLE BUTTON CONTAINER */}
+                <div style={{ display: 'inline-flex', background: '#e0e0e0', padding: '3px', borderRadius: '8px', border: '1px solid #ccc' }}>
+                  <button 
+                    onClick={() => setViewMode('brief')} 
+                    style={{
+                      padding: '6px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '0.85rem',
+                      fontWeight: viewMode === 'brief' ? 'bold' : 'normal',
+                      backgroundColor: viewMode === 'brief' ? '#1a237e' : 'transparent',
+                      color: viewMode === 'brief' ? '#ffffff' : '#555',
+                      boxShadow: viewMode === 'brief' ? '0 2px 4px rgba(0,0,0,0.15)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Brief
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('detailed')} 
+                    style={{
+                      padding: '6px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '0.85rem',
+                      fontWeight: viewMode === 'detailed' ? 'bold' : 'normal',
+                      backgroundColor: viewMode === 'detailed' ? '#1a237e' : 'transparent',
+                      color: viewMode === 'detailed' ? '#ffffff' : '#555',
+                      boxShadow: viewMode === 'detailed' ? '0 2px 4px rgba(0,0,0,0.15)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Detailed
+                  </button>
+                </div>
+              </div>
 
+              {/* DYNAMIC SUMMARY CONTENT BASED ON TOGGLE */}
+              <div style={{ padding: '14px 16px', backgroundColor: '#f0f4c3', borderRadius: '8px', borderLeft: '4px solid #9e9d24', marginBottom: '20px' }}>
+                <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', color: '#263238' }}>
+                  {viewMode === 'brief' ? analysisResult.briefSummary : analysisResult.detailedSummary}
+                </p>
+              </div>
+
+              {/* EXTRACTED DETAILS TABLE */}
               <h4 style={{ margin: '0 0 10px 0', color: '#1a237e' }}>Extracted Key Details</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {activeData.keyDetails.map((detail, idx) => (
-                  <div key={idx} style={{ padding: '10px', border: '1px solid #eee', borderRadius: '6px', backgroundColor: '#fff' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>{detail.label}</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: '500', marginTop: '3px' }}>{detail.value}</div>
+                {analysisResult.keyDetails.map((item, idx) => (
+                  <div key={idx} style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', border: '1px solid #eee' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#777', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.label}</span>
+                    <div style={{ fontSize: '0.9rem', fontWeight: '600', marginTop: '2px' }}>{item.value}</div>
                   </div>
                 ))}
               </div>
 
-              {activeData.confidenceLevel === 'LOW' && (
-                <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#ffebee', border: '1px solid #ffcdd2', borderRadius: '6px', color: '#c62828' }}>
-                  <strong>⚠️ Warning:</strong> Low confidence match detected. Manual review recommended.
-                  <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <button style={{ padding: '6px 12px', background: '#c62828', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Review Raw Text</button>
-                    <button style={{ padding: '6px 12px', background: '#fff', border: '1px solid #c62828', color: '#c62828', borderRadius: '4px', cursor: 'pointer' }}>Manual Override</button>
-                  </div>
+              {/* LOW CONFIDENCE WARNING */}
+              {analysisResult.confidenceLevel === 'LOW' && (
+                <div style={{ marginTop: '20px', padding: '12px', background: '#ffebee', border: '1px solid #ffcdd2', borderRadius: '6px', color: '#c62828', fontSize: '0.9rem' }}>
+                  <strong>⚠️ Notice:</strong> Low confidence score (<50%). Manual review recommended.
                 </div>
               )}
             </div>
