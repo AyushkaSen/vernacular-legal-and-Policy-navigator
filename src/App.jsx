@@ -5,8 +5,8 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState('input');
   const [analysisResult, setAnalysisResult] = useState(null);
   
-  // Toggle State: 'brief' or 'detailed'
-  const [viewMode, setViewMode] = useState('brief');
+  // Toggle State: false = Brief, true = Detailed
+  const [isDetailed, setIsDetailed] = useState(false);
 
   // Voice & File states
   const [isRecording, setIsRecording] = useState(false);
@@ -115,7 +115,7 @@ function App() {
         </div>
       )}
 
-      {/* ---------------- 3. RESULT SCREEN WITH BRIEF/DETAILED TOGGLE ---------------- */}
+      {/* ---------------- 3. RESULT SCREEN WITH TOGGLE SWITCH ---------------- */}
       {currentScreen === 'result' && analysisResult && (
         <div>
           <button onClick={() => setCurrentScreen('input')} style={{ marginBottom: '15px', padding: '6px 14px', background: '#e0e0e0', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600' }}>
@@ -136,53 +136,50 @@ function App() {
             {/* CARD BODY */}
             <div style={{ padding: '20px' }}>
               
-              {/* --- UX TOGGLE BUTTON SWITCHER --- */}
+              {/* --- BRIEF / DETAILED TOGGLE SWITCH --- */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <span style={{ fontWeight: 'bold', color: '#1a237e', fontSize: '0.95rem' }}>💡 Plain-Language Summary</span>
                 
-                {/* TOGGLE BUTTON CONTAINER */}
-                <div style={{ display: 'inline-flex', background: '#e0e0e0', padding: '3px', borderRadius: '8px', border: '1px solid #ccc' }}>
-                  <button 
-                    onClick={() => setViewMode('brief')} 
-                    style={{
-                      padding: '6px 16px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      fontSize: '0.85rem',
-                      fontWeight: viewMode === 'brief' ? 'bold' : 'normal',
-                      backgroundColor: viewMode === 'brief' ? '#1a237e' : 'transparent',
-                      color: viewMode === 'brief' ? '#ffffff' : '#555',
-                      boxShadow: viewMode === 'brief' ? '0 2px 4px rgba(0,0,0,0.15)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    Brief
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('detailed')} 
-                    style={{
-                      padding: '6px 16px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      fontSize: '0.85rem',
-                      fontWeight: viewMode === 'detailed' ? 'bold' : 'normal',
-                      backgroundColor: viewMode === 'detailed' ? '#1a237e' : 'transparent',
-                      color: viewMode === 'detailed' ? '#ffffff' : '#555',
-                      boxShadow: viewMode === 'detailed' ? '0 2px 4px rgba(0,0,0,0.15)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    Detailed
-                  </button>
-                </div>
+                <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: '600', color: !isDetailed ? '#1a237e' : '#777' }}>Brief</span>
+                  
+                  <input 
+                    type="checkbox" 
+                    checked={isDetailed} 
+                    onChange={(e) => setIsDetailed(e.target.checked)} 
+                    style={{ opacity: 0, width: 0, height: 0, margin: 0 }} 
+                  />
+                  
+                  <div style={{
+                    position: 'relative',
+                    margin: '0 8px',
+                    width: '38px',
+                    height: '22px',
+                    backgroundColor: isDetailed ? '#1a237e' : '#ccc',
+                    borderRadius: '20px',
+                    transition: 'background-color 0.2s ease'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: '2px',
+                      left: isDetailed ? '18px' : '2px',
+                      width: '18px',
+                      height: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '50%',
+                      transition: 'left 0.2s ease',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                    }}></div>
+                  </div>
+                  
+                  <span style={{ fontSize: '0.85rem', fontWeight: '600', color: isDetailed ? '#1a237e' : '#777' }}>Detailed</span>
+                </label>
               </div>
 
               {/* DYNAMIC SUMMARY CONTENT BASED ON TOGGLE */}
               <div style={{ padding: '14px 16px', backgroundColor: '#f0f4c3', borderRadius: '8px', borderLeft: '4px solid #9e9d24', marginBottom: '20px' }}>
                 <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', color: '#263238' }}>
-                  {viewMode === 'brief' ? analysisResult.briefSummary : analysisResult.detailedSummary}
+                  {!isDetailed ? analysisResult.briefSummary : analysisResult.detailedSummary}
                 </p>
               </div>
 
@@ -200,7 +197,7 @@ function App() {
               {/* LOW CONFIDENCE WARNING */}
               {analysisResult.confidenceLevel === 'LOW' && (
                 <div style={{ marginTop: '20px', padding: '12px', background: '#ffebee', border: '1px solid #ffcdd2', borderRadius: '6px', color: '#c62828', fontSize: '0.9rem' }}>
-                  <strong>⚠️ Notice:</strong> Low confidence score (<50%). Manual review recommended.
+                  <strong>⚠️ Notice:</strong> Low confidence score (&lt;50%). Manual review recommended.
                 </div>
               )}
             </div>
