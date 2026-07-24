@@ -1,16 +1,23 @@
-# React + Vite
+# Vernacular Legal and Policy Navigator — Frontend GUI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive web application designed to break down complex legal documents, government schemes, and RTCs into simple terms.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Input Screen**: Interface for uploading CSVs or legal documents for analysis.
+- **Processing Screen**: Real-time loading indicator while processing document data.
+- **High-Confidence Result Screen**: Clear output view for validated legal matches with export options.
+- **Low-Confidence Warning Screen**: Interactive state for low-probability matches (<50%) with manual review and override options.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Framework**: [React](https://react.dev/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Linter**: ESLint
 
-## Expanding the ESLint configuration
+## 💻 Local Setup Instructions
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/AyushkaSen/vernacular-legal-and-Policy-navigator.git](https://github.com/AyushkaSen/vernacular-legal-and-Policy-navigator.git)
+   cd vernacular-legal-and-Policy-navigator
